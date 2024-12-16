@@ -22,6 +22,11 @@ export AWS_REGION="us-east-1"
 
 #### Define config.yaml
 
+# Iceberg Tables
+![image](https://github.com/user-attachments/assets/3aa5623b-9ad1-43d9-a9a6-925b89ec4c25)
+
+
+# CSV File Processing 
 ![image](https://github.com/user-attachments/assets/7999dd0c-b25e-4e36-97b1-a9004d03f87b)
 
 
