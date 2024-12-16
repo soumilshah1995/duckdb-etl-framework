@@ -21,7 +21,8 @@ export AWS_REGION="us-east-1"
 ```
 
 #### Define config.yaml
-![image](https://github.com/user-attachments/assets/475ea421-f85f-4f7b-b27d-8d9c67ca260b)
+
+![image](https://github.com/user-attachments/assets/7999dd0c-b25e-4e36-97b1-a9004d03f87b)
 
 
 #### Run template 
