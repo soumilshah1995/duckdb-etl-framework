@@ -59,6 +59,42 @@ class ParquetFileProcessor(FileProcessor):
             print(f"New data inserted into '{table_name}' from Parquet.")
 
 
+class IcebergFileProcessor(FileProcessor):
+    def read_to_temp_table(self, conn, iceberg_path, table_name):
+        metadata_file = self.get_latest_metadata_file(iceberg_path)
+        if metadata_file:
+            query = f"CREATE TABLE {table_name} AS SELECT * FROM iceberg_scan('{metadata_file}');"
+            conn.execute(query)
+            print(f"Table '{table_name}' created and data inserted from Iceberg.")
+        else:
+            print(f"No metadata files found for Iceberg at path: {iceberg_path}")
+
+    def get_latest_metadata_file(self, iceberg_path):
+        bucket_name = urlparse(iceberg_path).netloc
+        path_without_bucket = iceberg_path.replace(f's3://{bucket_name}/', '')
+        metadata_prefix = f"{path_without_bucket.strip('/')}/metadata/"
+
+        s3 = boto3.client('s3')
+        try:
+            response = s3.list_objects_v2(Bucket=bucket_name, Prefix=metadata_prefix)
+            metadata_files = [
+                obj['Key'] for obj in response.get('Contents', [])
+                if obj['Key'].endswith('.metadata.json')
+            ]
+
+            if metadata_files:
+                latest_metadata = sorted(metadata_files)[-1]
+                print("Latest Metadata File:", latest_metadata)
+                return f"s3://{bucket_name}/{latest_metadata}"
+            else:
+                print("No metadata files found")
+                return None
+
+        except Exception as e:
+            print(f"Error listing objects: {str(e)}")
+            return None  # Ensure we return None on error
+
+
 class IncrementalFileProcessor:
     def __init__(self, path, checkpoint_path, minio_config=None):
         self.path = path
@@ -173,7 +209,7 @@ def create_output_directory(output_path):
 
 
 def main():
-    config = load_config('config.yaml')
+    config = load_config('/Users/sshah/IdeaProjects/poc-projects/duckdb/duckdb-file-splitter/yaml/iceberg.yaml')
     conn = duckdb.connect(config['duckdb']['path'])
 
     # Load extensions from config
@@ -183,12 +219,12 @@ def main():
         conn.execute(f"LOAD {extension_name};")
         print(f"Loaded extension: {extension_name}")
 
-    # Set AWS configuration (replace with your actual values)
     create_output_directory(config['output']['path'])
 
     input_format_processor_map = {
         'csv': CSVFileProcessor(),
-        'parquet': ParquetFileProcessor()
+        'parquet': ParquetFileProcessor(),
+        'iceberg': IcebergFileProcessor()
     }
 
     for table_config in config['input']['tables']:
@@ -200,27 +236,45 @@ def main():
         input_processor = input_format_processor_map[input_format]
 
         if input_mode == 'full':
-            input_processor.read_to_temp_table(conn, input_path, table_name)
+            if input_format == 'iceberg':
+                input_processor.read_to_temp_table(conn, input_path, table_name)
+            else:
+                input_processor.read_to_temp_table(conn, input_path, table_name)
+
         elif input_mode == 'INC':
-            processor = IncrementalFileProcessor(input_path, config['checkpoint']['path'])
+            processor = IncrementalFileProcessor(input_path, checkpoint_path)  # Pass specific checkpoint path
             new_files = processor.get_new_files()
+
             if new_files:
                 for new_file in new_files:
                     print(f"Processing new file for {table_name}: {new_file}")
-                    input_processor.read_to_temp_table(conn, new_file, table_name)
+                    if input_format == 'iceberg':
+                        input_processor.read_to_temp_table(conn, new_file, table_name)
+                    else:
+                        input_processor.read_to_temp_table(conn, new_file, table_name)
                 processor.commit_checkpoint()
+
             else:
                 print(f"No new files to process for {table_name} in incremental mode.")
 
     transformer = DataTransformer(conn)
     transform_sql = config['transform']['sql']
+
     transformer.transform_and_export(transform_sql,
                                      config['output']['path'],
                                      config['output']['mode'],
                                      config['output']['format'])
 
-    conn.close()
+    # Drop temporary tables after export
+    for table_config in config['input']['tables']:
+        table_name = table_config['name']
+        try:
+            conn.execute(f"DROP TABLE IF EXISTS {table_name};")
+            print(f"Dropped temporary table '{table_name}'.")
+        except Exception as e:
+            print(f"Error dropping table '{table_name}': {e}")
 
+    conn.close()
 
 if __name__ == '__main__':
     main()
