@@ -1,0 +1,44 @@
+# DuckDB Configuration
+duckdb:
+  path: mydatabase.duckdb
+  extension:
+    - name: httpfs  # HTTP File System extension
+    - name: aws     # AWS S3 extension
+    - name: iceberg # Iceberg extension
+
+# Input Tables Configuration
+input:
+  tables:
+    - name: customers
+      path: 's3://<BUCKETNAME>/warehouse/customers/'
+      format: iceberg   # Changed to iceberg format
+      mode: full
+
+    - name: orders
+      path: 's3://<BUCKETNAME>/warehouse/orders/'
+      format: iceberg   # Changed to iceberg format
+      mode: full
+
+# Transformation SQL Query (Adjust as needed based on your schema)
+transform:
+  sql: |
+    SELECT 
+      c.customer_id, 
+      c.name, 
+      o.order_id, 
+      o.order_date, 
+      o.total_amount 
+    FROM 
+      customers c 
+    JOIN 
+      orders o ON c.customer_id = o.customer_id;
+
+# Output Configuration
+output:
+  path: 's3://<BUCKETNAME>/icebergoutput/csv/'
+  format: csv
+  mode: overwrite
+
+# Checkpoint Configuration (Optional for incremental processing)
+checkpoint:
+  path: 's3://<BUCKETNAME>/checkpoint.json'

@@ -1,0 +1,44 @@
+# DuckDB Configuration
+duckdb:
+  path: mydatabase.duckdb
+  extension:
+    - name: httpfs  # HTTP File System extension
+    - name: aws     # AWS S3 extension
+
+# Input Tables Configuration
+input:
+  tables:
+    - name: customers
+      path: 's3://<BUCKETNAME>/raw/customers/*.csv'
+      format: csv
+      mode: full
+      checkpoint_path: 's3://<BUCKETNAME>/checkpoints/customers_checkpoint.json'
+    - name: orders
+      path: 's3://<BUCKETNAME>/raw/orders/*.csv'
+      format: csv
+      mode: full
+      checkpoint_path: 's3://<BUCKETNAME>/checkpoints/orders_checkpoint.json'
+
+# Transformation SQL Query
+transform:
+  sql: |
+    SELECT 
+      c.customer_id, 
+      c.name, 
+      o.order_id, 
+      o.order_date, 
+      o.total_amount 
+    FROM 
+      customers c 
+    JOIN 
+      orders o ON c.customer_id = o.customer_id;
+
+# Output Configuration
+output:
+  path: 's3://<BUCKETNAME>/output/csv/'
+  format: csv
+  mode: overwrite
+
+# Checkpoint Configuration
+checkpoint:
+  path: 's3://<BUCKETNAME>/checkpoint.json'
