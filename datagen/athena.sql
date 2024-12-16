@@ -5,7 +5,7 @@ CREATE TABLE default.customers (
                                    address STRING,
                                    phone STRING
 )
-    LOCATION 's3://soumil-dev-bucket-1995/warehouse/customers'
+    LOCATION 's3://<bucket>/warehouse/customers'
 TBLPROPERTIES (
 'table_type' = 'ICEBERG',
 'format' = 'PARQUET'
@@ -26,7 +26,7 @@ CREATE TABLE default.orders (
                                 total_amount DOUBLE,
                                 status STRING
 )
-    LOCATION 's3://soumil-dev-bucket-1995/warehouse/orders'
+    LOCATION 's3://<bucket>/warehouse/orders'
 TBLPROPERTIES (
     'table_type' = 'ICEBERG',
     'format' = 'PARQUET'
