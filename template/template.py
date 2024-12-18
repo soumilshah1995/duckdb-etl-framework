@@ -99,8 +99,7 @@ class IcebergFileProcessor(FileProcessor):
 
         except Exception as e:
             print(f"Error listing objects: {str(e)}")
-            return None  # Ensure we return None on error
-
+            return None
 
 
 class IncrementalFileProcessor:
@@ -185,21 +184,35 @@ class DataTransformer:
     def __init__(self, conn):
         self.conn = conn
 
-    def transform_and_export(self, transform_sql, output_path, mode='append', output_format='csv'):
+    def transform_and_export(self, transform_sql, output_path, mode='append', output_format='csv', threshold=None):
         self.conn.execute(f"CREATE OR REPLACE VIEW transformed_data AS {transform_sql};")
+
         timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+
         if mode == 'overwrite':
             for file in glob.glob(os.path.join(output_path, f"*.{output_format}")):
                 os.remove(file)
                 print(f"Deleted existing file: {file}")
-        output_file = os.path.join(output_path, f"{timestamp}.{output_format}")
-        if output_format == 'csv':
-            self.conn.execute(f"COPY (SELECT * FROM transformed_data) TO '{output_file}' WITH (FORMAT CSV, HEADER);")
-        elif output_format == 'parquet':
-            self.conn.execute(f"COPY (SELECT * FROM transformed_data) TO '{output_file}' WITH (FORMAT PARQUET);")
+
+        if threshold is not None:
+            output_file_template = os.path.join(output_path, f"{timestamp}")
+
+            copy_query = f"""
+                COPY (
+                    SELECT *,
+                    FLOOR((ROW_NUMBER() OVER () - 1) / {threshold}) AS file_number
+                    FROM transformed_data
+                )
+                TO '{output_file_template}' (FORMAT {output_format.upper()}, PARTITION_BY file_number);
+            """
+
         else:
-            raise ValueError("Unsupported output format. Use 'csv' or 'parquet'.")
-        print(f"Data exported to {output_file} successfully!")
+            output_file = os.path.join(output_path, f"{timestamp}.{output_format}")
+
+            copy_query = f"COPY (SELECT * FROM transformed_data) TO '{output_file}' WITH (FORMAT {output_format.upper()}, HEADER);"
+
+        self.conn.execute(copy_query)
+        print(f"Data exported successfully!")
 
 
 def load_config(config_path):
@@ -217,10 +230,9 @@ def create_output_directory(output_path):
 
 
 def main():
-    config = load_config('/Users/sshah/IdeaProjects/poc-projects/duckdb/duckdb-file-splitter/yaml/iceberg.yaml')
+    config = load_config('/Users/sshah/IdeaProjects/poc-projects/duckdb/duckdb-file-splitter/yaml/splitter.yaml')
     conn = duckdb.connect(config['duckdb']['path'])
 
-    # Load extensions from config
     for extension in config['duckdb'].get('extension', []):
         extension_name = extension['name']
         conn.execute(f"INSTALL {extension_name};")
@@ -235,6 +247,8 @@ def main():
         'iceberg': IcebergFileProcessor()
     }
 
+    temp_tables = []
+
     for table_config in config['input']['tables']:
         table_name = table_config['name']
         input_format = table_config['format']
@@ -244,42 +258,40 @@ def main():
         input_processor = input_format_processor_map[input_format]
 
         if input_mode == 'full':
-            if input_format == 'iceberg':
-                input_processor.read_to_temp_table(conn, input_path, table_name)
-            else:
-                input_processor.read_to_temp_table(conn, input_path, table_name)
+            input_processor.read_to_temp_table(conn, input_path, table_name)
 
         elif input_mode == 'INC':
-            processor = IncrementalFileProcessor(input_path, checkpoint_path)  # Pass specific checkpoint path
+            processor = IncrementalFileProcessor(input_path, f"{table_name}_checkpoint.json")
             new_files = processor.get_new_files()
 
             if new_files:
                 for new_file in new_files:
                     print(f"Processing new file for {table_name}: {new_file}")
-                    if input_format == 'iceberg':
-                        input_processor.read_to_temp_table(conn, new_file, table_name)
-                    else:
-                        input_processor.read_to_temp_table(conn, new_file, table_name)
+                    input_processor.read_to_temp_table(conn, new_file, table_name)
                 processor.commit_checkpoint()
 
             else:
                 print(f"No new files to process for {table_name} in incremental mode.")
 
+        temp_tables.append(table_name)
+
     transformer = DataTransformer(conn)
     transform_sql = config['transform']['sql']
 
-    transformer.transform_and_export(transform_sql,
-                                     config['output']['path'],
-                                     config['output']['mode'],
-                                     config['output']['format'])
+    transformer.transform_and_export(
+        transform_sql,
+        config['output']['path'],
+        config['output']['mode'],
+        config['output']['format'],
+        config['output'].get('threshold')
+    )
 
-    # Drop temporary tables after export using the IcebergFileProcessor instance
-    if isinstance(input_processor, IcebergFileProcessor):
-        input_processor.drop_table(conn, 'customers')  # Adjust based on your actual table names
-        input_processor.drop_table(conn, 'orders')     # Adjust based on your actual table names
+    iceberg_processor = IcebergFileProcessor()
+    for temp_table in temp_tables:
+        iceberg_processor.drop_table(conn, temp_table)
 
     conn.close()
 
+
 if __name__ == '__main__':
     main()
-
