@@ -1,0 +1,23 @@
+duckdb:
+  path: mydatabase.duckdb
+  extension:
+    - name: httpfs
+input:
+  tables:
+    - name: nyctaxi
+      path: '/Users/sshah/IdeaProjects/poc-projects/duckdb/duckdb-file-splitter/output/*.csv'
+      format: csv
+      mode: full
+transform:
+  sql: |
+    SELECT 
+      * 
+    FROM 
+      nyctaxi
+output:
+  path: '/Users/sshah/IdeaProjects/poc-projects/duckdb/duckdb-file-splitter/transformed_output'
+  format: csv
+  mode: overwrite
+  threshold: 10000000
+
+
