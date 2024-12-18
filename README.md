@@ -29,6 +29,9 @@ export AWS_REGION="us-east-1"
 # CSV File Processing 
 ![image](https://github.com/user-attachments/assets/7999dd0c-b25e-4e36-97b1-a9004d03f87b)
 
+# File splitter (Larger Files into Smaller files )
+![image](https://github.com/user-attachments/assets/4d60e7bd-dc27-49e1-9cf3-8ebf3a273d7b)
+
 
 #### Run template 
 ```
