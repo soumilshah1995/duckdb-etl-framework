@@ -22,20 +22,116 @@ export AWS_REGION="us-east-1"
 
 #### Define config.yaml
 
-# Iceberg Tables
-![image](https://github.com/user-attachments/assets/3aa5623b-9ad1-43d9-a9a6-925b89ec4c25)
+# CSV Files 
+```
+# DuckDB Configuration
+duckdb:
+  path: default.duckdb
+  extension:
+    - name: httpfs  # HTTP File System extension
+    - name: aws     # AWS S3 extension
 
+# Input Tables Configuration
+input:
+  tables:
+    - name: customers
+      path: s3://<masked_bucket>/raw/customers/*.csv
+      format: csv
+      mode: full
+      checkpoint_path: 's3://<masked_bucket>/checkpoints/customers_checkpoint.json'
+    - name: orders
+      path: s3://<masked_bucket>/raw/orders/
+      format: csv
+      mode: inc
+      checkpoint_path: 's3://<masked_bucket>/checkpoints/orders_checkpoint.json'
 
-# CSV File Processing 
-![image](https://github.com/user-attachments/assets/7999dd0c-b25e-4e36-97b1-a9004d03f87b)
+# Transformation SQL Query
+transform:
+  sql: |
+    SELECT 
+      c.customer_id, 
+      c.name, 
+      o.order_id, 
+      o.order_date, 
+      o.total_amount 
 
-# File splitter (Larger Files into Smaller files )
-![image](https://github.com/user-attachments/assets/4d60e7bd-dc27-49e1-9cf3-8ebf3a273d7b)
+```
+# iceberg tables
+```
+# DuckDB Configuration
+duckdb:
+  path: mydatabase.duckdb
+  extension:
+    - name: httpfs  # HTTP File System extension
+    - name: aws     # AWS S3 extension
+    - name: iceberg # Iceberg extension
+
+# Input Tables Configuration
+input:
+  tables:
+    - name: customers
+      path: 's3://<masked_bucket>/warehouse/customers/'
+      format: iceberg   # Changed to iceberg format
+      mode: full
+
+    - name: orders
+      path: 's3://<masked_bucket>/warehouse/orders/'
+      format: iceberg   # Changed to iceberg format
+      mode: full
+
+# Transformation SQL Query (Adjust as needed based on your schema)
+transform:
+  sql: |
+    SELECT 
+      c.customer_id, 
+      c.name, 
+      o.order_id, 
+      o.order_date, 
+      o.total_amount 
+    FROM 
+      customers c 
+    JOIN 
+      orders o ON c.customer_id = o.customer_id;
+
+# Output Configuration
+output:
+  path: 's3://<masked_bucket>/icebergoutput/csv/'
+  format: csv
+  mode: overwrite
+  threshold: 2
+
+```
+# File splitter
+```
+duckdb:
+  path: mydatabase.duckdb
+  extension:
+    - name: httpfs
+input:
+  tables:
+    - name: nyctaxi
+      path: '/<masked_path>/output/*.csv'
+      format: csv
+      mode: full
+transform:
+  sql: |
+    SELECT 
+      * 
+    FROM 
+      nyctaxi
+output:
+  path: '/<masked_path>/transformed_output'
+  format: csv
+  mode: overwrite
+  threshold: 10000000
+
+```
 
 
 #### Run template 
 ```
-python3 template.py
+python3 template.py --config /<PATH TO CONFIG>/iceberg.yaml
+
 ```
 
 ## Contribution
