@@ -54,6 +54,16 @@ transform:
       o.order_id, 
       o.order_date, 
       o.total_amount 
+    FROM 
+      customers c 
+    JOIN 
+      orders o ON c.customer_id = o.customer_id;
+
+# Output Configuration
+output:
+  path: 's3://soumil-dev-bucket-1995/output/csv/'
+  format: csv
+  mode: overwrite
 
 ```
 # iceberg tables
