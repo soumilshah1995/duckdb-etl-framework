@@ -18,6 +18,7 @@ Custom Logic: Implement your own transformation logic to meet specific business 
 export AWS_ACCESS_KEY_ID="YOUR_ACCESS_KEY_ID"
 export AWS_SECRET_ACCESS_KEY="YOUR_SECRET_ACCESS_KEY"
 export AWS_REGION="us-east-1"
+pip3 install -r requirements.txt
 ```
 
 #### Define config.yaml
