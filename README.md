@@ -21,9 +21,9 @@ export AWS_REGION="us-east-1"
 pip3 install -r requirements.txt
 ```
 
-#### Define config.yaml
+# Step 2:  Define config.yaml
 
-# CSV Files 
+#### CSV Files 
 ```
 # DuckDB Configuration
 duckdb:
@@ -67,7 +67,7 @@ output:
   mode: overwrite
 
 ```
-# iceberg tables
+#### iceberg tables
 ```
 # DuckDB Configuration
 duckdb:
@@ -112,7 +112,7 @@ output:
   threshold: 2
 
 ```
-# File splitter
+### File splitter
 ```
 duckdb:
   path: mydatabase.duckdb
