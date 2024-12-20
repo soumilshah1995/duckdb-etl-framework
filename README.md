@@ -163,6 +163,24 @@ aws s3 cp /localpath/config.yaml s3://bucket/configs/config.yaml
 python3 template.py --config s3://bucket/configs/config.yaml
 ```
 
+# Docker Setup 
+```
+export AWS_ACCESS_KEY_ID="XX"
+export AWS_SECRET_ACCESS_KEY="XX"
+
+docker build -t my-data-processor \
+  --build-arg AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+  --build-arg AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+  --build-arg AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION .
+
+
+
+docker run -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+           -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+           -e AWS_DEFAULT_REGION=us-east-1 \
+           my-data-processor python template.py --config s3://soumil-dev-bucket-1995/configs/csv.yaml
+```
+
 ## Contribution
 
 
