@@ -39,6 +39,3 @@ output:
   format: csv
   mode: overwrite
 
-# Checkpoint Configuration
-checkpoint:
-  path: 's3://<BUCKETNAME>/checkpoint.json'
