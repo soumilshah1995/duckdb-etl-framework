@@ -1,6 +1,9 @@
 ## DuckDB-Powered Lightweight ETL: An Extensible Framework for Seamless Data Integration
 
 
+![image](https://github.com/user-attachments/assets/02c932f6-66d2-496c-98ce-41da507c8c15)
+
+
 This repository provides a lightweight ETL framework powered by **DuckDB**, designed for seamless data integration. With this framework, you can easily **extract**, **transform**, and **load** data from various sources into your data lake or warehouse. The architecture allows for extensibility, enabling users to integrate with Lakehouse formats like **Iceberg** and implement custom transformation logic as needed.
 
 
