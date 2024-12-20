@@ -1,29 +1,37 @@
 ## DuckDB-Powered Lightweight ETL: An Extensible Framework for Seamless Data Integration
 
 
-This repository provides a lightweight ETL framework powered by DuckDB, designed for seamless data integration. With this framework, you can easily extract, transform, and load data from various sources into your data lake or warehouse. The architecture allows for extensibility, enabling users to integrate with Lakehouse formats like Iceberg and implement custom logic as needed.
-Features
+This repository provides a lightweight ETL framework powered by **DuckDB**, designed for seamless data integration. With this framework, you can easily **extract**, **transform**, and **load** data from various sources into your data lake or warehouse. The architecture allows for extensibility, enabling users to integrate with Lakehouse formats like **Iceberg** and implement custom transformation logic as needed.
 
 
-Lightweight: Utilizes DuckDB for in-memory processing, making it efficient and fast.
+## Features
+
+- **Lightweight**: Utilizes DuckDB for in-memory processing, making it efficient and fast.
+- **Extensible**: Easily extend functionality to support various data sources and formats, including Lakehouse architectures like Iceberg.
+- **Custom Logic**: Implement your own transformation logic to meet specific business requirements.
+
+## Getting Started
+
+### Step 1: Install Dependencies
 
 
-Extensible: Easily extend functionality to support various data sources and formats, including Lakehouse architectures like Iceberg.
+Before you begin, you'll need to set up your AWS credentials and install the required dependencies.
 
-
-Custom Logic: Implement your own transformation logic to meet specific business requirements.
-
-#### Step 1
 ```
 export AWS_ACCESS_KEY_ID="YOUR_ACCESS_KEY_ID"
 export AWS_SECRET_ACCESS_KEY="YOUR_SECRET_ACCESS_KEY"
 export AWS_REGION="us-east-1"
+
+```
+Install Python dependencies:
+```
 pip3 install -r requirements.txt
 ```
 
-# Step 2:  Define config.yaml
+Step 2: Define the Configuration File (config.yaml)
 
-#### CSV Files 
+
+#### CSV Files Example
 ```
 # DuckDB Configuration
 duckdb:
@@ -67,7 +75,8 @@ output:
   mode: overwrite
 
 ```
-#### iceberg tables
+#### Iceberg Tables Example
+
 ```
 # DuckDB Configuration
 duckdb:
@@ -112,7 +121,7 @@ output:
   threshold: 2
 
 ```
-### File splitter
+### File Splitter Example
 ```
 duckdb:
   path: mydatabase.duckdb
@@ -139,47 +148,55 @@ output:
 ```
 
 
-# Template Script
+#### Step 3: Running the Script
+This repository provides a template script, template.py, that can be used with various configuration files for data processing operations. The script supports both local and AWS S3-based configuration files.
 
-This repository provides a script, `template.py`, that can be used with various configuration files for data processing or other operations. The script supports configurations stored locally or in AWS S3.
 
----
+Run with Local Configurations
+```
+python3 template.py --config /path/to/config.yaml
 
-# How to Run
-
-`template.py` runs tasks using configuration files stored locally or in S3.
-
----
+```
+Run with S3-based Configurations
 
 ## How to Use
 
+Upload your config.yaml to an S3 bucket:
 ```
-python3 template.py --config /<PATH TO CONFIG>/iceberg.yaml
-python3 template.py --config /<PATH TO CONFIG>/csv.yaml
-python3 template.py --config /<PATH TO CONFIG>/splitter.yaml
-
-S3 based Configs
 aws s3 cp /localpath/config.yaml s3://bucket/configs/config.yaml
-python3 template.py --config s3://bucket/configs/config.yaml
 ```
 
-# Docker Setup 
+Run the script using the S3 path:
+```
+python3 template.py --config s3://bucket/configs/config.yaml
+
+```
+
+Docker Setup
+
+You can also build and run the framework using Docker for easier deployment.
+Build the Docker Image
+
 ```
 export AWS_ACCESS_KEY_ID="XX"
 export AWS_SECRET_ACCESS_KEY="XX"
+export AWS_DEFAULT_REGION="us-east-1"
 
 docker build -t my-data-processor \
   --build-arg AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
   --build-arg AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
   --build-arg AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION .
 
-
-
+```
+Run the Docker Container
+```
 docker run -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
            -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
            -e AWS_DEFAULT_REGION=us-east-1 \
            my-data-processor python template.py --config s3://soumil-dev-bucket-1995/configs/csv.yaml
+
 ```
+
 
 ## Contribution
 
