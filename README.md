@@ -61,7 +61,7 @@ transform:
 
 # Output Configuration
 output:
-  path: 's3://soumil-dev-bucket-1995/output/csv/'
+  path: 's3://<bucket>/output/csv/'
   format: csv
   mode: overwrite
 
