@@ -138,10 +138,31 @@ output:
 ```
 
 
-#### Run template 
-```
-python3 template.py --config /<PATH TO CONFIG>/iceberg.yaml
+# Template Script
 
+This repository provides a script, `template.py`, that can be used with various configuration files for data processing or other operations. The script supports configurations stored locally or in AWS S3.
+
+---
+
+# How to Run
+
+`template.py` runs tasks using configuration files stored locally or in S3.
+
+---
+
+## How to Use
+
+### Local Configurations
+Run the script with local YAML files:
+```bash
+```bash
+python3 template.py --config /<PATH TO CONFIG>/iceberg.yaml
+python3 template.py --config /<PATH TO CONFIG>/csv.yaml
+python3 template.py --config /<PATH TO CONFIG>/splitter.yaml
+
+S3 based Configs
+aws s3 cp /localpath/config.yaml s3://bucket/configs/config.yaml
+python3 template.py --config s3://bucket/configs/config.yaml
 ```
 
 ## Contribution
