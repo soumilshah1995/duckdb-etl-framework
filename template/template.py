@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 import boto3
 from abc import ABC, abstractmethod
 import argparse
+import tempfile
 
 
 class FileProcessor(ABC):
@@ -216,11 +217,6 @@ class DataTransformer:
         print(f"Data exported successfully!")
 
 
-def load_config(config_path):
-    with open(config_path, 'r', encoding="utf-8") as file:
-        return yaml.safe_load(file)
-
-
 def create_output_directory(output_path):
     if not output_path.startswith('s3'):
         if not os.path.exists(output_path):
@@ -228,6 +224,31 @@ def create_output_directory(output_path):
             print(f"Created output directory: {output_path}")
     else:
         print(f"Skipping directory creation for S3 path: {output_path}")
+
+
+def download_s3_file(s3_path, local_path):
+    parsed_url = urlparse(s3_path)
+    bucket = parsed_url.netloc
+    key = parsed_url.path.lstrip('/')
+
+    s3 = boto3.client('s3')
+    s3.download_file(bucket, key, local_path)
+    print(f"Downloaded config file from S3: {s3_path} to {local_path}")
+
+
+def load_config(config_path):
+    if config_path.startswith('s3://'):
+        with tempfile.NamedTemporaryFile(mode='w+', delete=False) as temp_file:
+            download_s3_file(config_path, temp_file.name)
+            config_path = temp_file.name
+
+    with open(config_path, 'r', encoding="utf-8") as file:
+        config = yaml.safe_load(file)
+
+    if config_path.startswith('/tmp/'):
+        os.unlink(config_path)
+
+    return config
 
 
 def main(config_path):
