@@ -7,6 +7,7 @@ import json
 from urllib.parse import urlparse
 import boto3
 from abc import ABC, abstractmethod
+import argparse
 
 
 class FileProcessor(ABC):
@@ -216,7 +217,7 @@ class DataTransformer:
 
 
 def load_config(config_path):
-    with open(config_path, 'r') as file:
+    with open(config_path, 'r', encoding="utf-8") as file:
         return yaml.safe_load(file)
 
 
@@ -229,8 +230,8 @@ def create_output_directory(output_path):
         print(f"Skipping directory creation for S3 path: {output_path}")
 
 
-def main():
-    config = load_config('/Users/sshah/IdeaProjects/poc-projects/duckdb/duckdb-file-splitter/yaml/splitter.yaml')
+def main(config_path):
+    config = load_config(config_path)
     conn = duckdb.connect(config['duckdb']['path'])
 
     for extension in config['duckdb'].get('extension', []):
@@ -259,7 +260,6 @@ def main():
 
         if input_mode == 'full':
             input_processor.read_to_temp_table(conn, input_path, table_name)
-
         elif input_mode == 'INC':
             processor = IncrementalFileProcessor(input_path, f"{table_name}_checkpoint.json")
             new_files = processor.get_new_files()
@@ -269,7 +269,6 @@ def main():
                     print(f"Processing new file for {table_name}: {new_file}")
                     input_processor.read_to_temp_table(conn, new_file, table_name)
                 processor.commit_checkpoint()
-
             else:
                 print(f"No new files to process for {table_name} in incremental mode.")
 
@@ -294,4 +293,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(description='Process data using a configuration file.')
+    parser.add_argument('--config', type=str, required=True, help='Path to the configuration file')
+    args = parser.parse_args()
+    main(args.config)
