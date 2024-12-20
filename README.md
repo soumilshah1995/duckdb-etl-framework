@@ -160,9 +160,8 @@ Run with Local Configurations
 python3 template.py --config /path/to/config.yaml
 
 ```
-Run with S3-based Configurations
 
-## How to Use
+### Run with S3-based Configurations
 
 Upload your config.yaml to an S3 bucket:
 ```
