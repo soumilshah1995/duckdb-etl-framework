@@ -155,7 +155,7 @@ This repository provides a script, `template.py`, that can be used with various 
 ### Local Configurations
 Run the script with local YAML files:
 ```bash
-```bash
+```
 python3 template.py --config /<PATH TO CONFIG>/iceberg.yaml
 python3 template.py --config /<PATH TO CONFIG>/csv.yaml
 python3 template.py --config /<PATH TO CONFIG>/splitter.yaml
