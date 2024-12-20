@@ -174,7 +174,7 @@ python3 template.py --config s3://bucket/configs/config.yaml
 
 ```
 
-Docker Setup
+# Docker Setup
 
 You can also build and run the framework using Docker for easier deployment.
 Build the Docker Image
